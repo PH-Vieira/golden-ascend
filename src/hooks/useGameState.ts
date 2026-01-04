@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface Upgrade {
   id: string;
@@ -23,7 +23,16 @@ export interface GameState {
   prestigeMultiplier: number;
   totalPrestiges: number;
   upgrades: Upgrade[];
+  lastSaveTime: number;
 }
+
+export interface OfflineEarnings {
+  amount: number;
+  timeAway: number;
+}
+
+const MAX_OFFLINE_TIME = 8 * 60 * 60; // 8 hours max offline earnings
+const OFFLINE_EFFICIENCY = 0.5; // 50% efficiency while offline
 
 const initialUpgrades: Upgrade[] = [
   {
@@ -109,10 +118,14 @@ const initialUpgrades: Upgrade[] = [
 const PRESTIGE_THRESHOLD = 10000;
 
 export function useGameState() {
+  const [offlineEarnings, setOfflineEarnings] = useState<OfflineEarnings | null>(null);
+  const hasCalculatedOffline = useRef(false);
+
   const [gameState, setGameState] = useState<GameState>(() => {
     const saved = localStorage.getItem('idleGameState');
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      return { ...parsed, lastSaveTime: parsed.lastSaveTime || Date.now() };
     }
     return {
       coins: 0,
@@ -123,8 +136,45 @@ export function useGameState() {
       prestigeMultiplier: 1,
       totalPrestiges: 0,
       upgrades: initialUpgrades,
+      lastSaveTime: Date.now(),
     };
   });
+
+  // Calculate offline earnings on mount
+  useEffect(() => {
+    if (hasCalculatedOffline.current) return;
+    hasCalculatedOffline.current = true;
+
+    const saved = localStorage.getItem('idleGameState');
+    if (!saved) return;
+
+    const parsed = JSON.parse(saved);
+    const lastSave = parsed.lastSaveTime || Date.now();
+    const now = Date.now();
+    const secondsAway = Math.min((now - lastSave) / 1000, MAX_OFFLINE_TIME);
+
+    // Only show if away for more than 1 minute and has production
+    if (secondsAway >= 60 && parsed.coinsPerSecond > 0) {
+      const earnings = Math.floor(parsed.coinsPerSecond * secondsAway * OFFLINE_EFFICIENCY);
+      
+      if (earnings > 0) {
+        setOfflineEarnings({
+          amount: earnings,
+          timeAway: secondsAway,
+        });
+
+        setGameState((prev) => ({
+          ...prev,
+          coins: prev.coins + earnings,
+          totalCoins: prev.totalCoins + earnings,
+        }));
+      }
+    }
+  }, []);
+
+  const dismissOfflineEarnings = useCallback(() => {
+    setOfflineEarnings(null);
+  }, []);
 
   // Calculate coins per second
   const calculateCPS = useCallback(() => {
@@ -175,9 +225,13 @@ export function useGameState() {
     return () => clearInterval(interval);
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage with timestamp
   useEffect(() => {
-    localStorage.setItem('idleGameState', JSON.stringify(gameState));
+    const stateToSave = {
+      ...gameState,
+      lastSaveTime: Date.now(),
+    };
+    localStorage.setItem('idleGameState', JSON.stringify(stateToSave));
   }, [gameState]);
 
   const handleClick = useCallback(() => {
@@ -230,6 +284,7 @@ export function useGameState() {
       prestigeMultiplier: 1 + (prev.prestigePoints + newPrestigePoints) * 0.1,
       totalPrestiges: prev.totalPrestiges + 1,
       upgrades: initialUpgrades,
+      lastSaveTime: Date.now(),
     }));
   }, [canPrestige, calculatePrestigePoints]);
 
@@ -241,5 +296,7 @@ export function useGameState() {
     prestige,
     canPrestige,
     calculatePrestigePoints,
+    offlineEarnings,
+    dismissOfflineEarnings,
   };
 }
