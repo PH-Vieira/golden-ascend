@@ -90,18 +90,16 @@
 @layer components {
   .game-card {
     @apply bg-card rounded-2xl p-4 border border-border/50;
-    background: var(--gradient-card);
-    box-shadow: var(--shadow-card);
+    background: linear-gradient(180deg, hsl(230 20% 14%), hsl(230 20% 10%));
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.3);
   }
 
   .gold-text {
-    @apply text-transparent bg-clip-text;
-    background: var(--gradient-gold);
+    color: hsl(45 100% 55%);
   }
 
   .prestige-text {
-    @apply text-transparent bg-clip-text;
-    background: var(--gradient-prestige);
+    color: hsl(270 80% 70%);
   }
 
   .glow-gold {
