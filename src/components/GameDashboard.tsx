@@ -5,6 +5,7 @@ import { useGameState } from '@/hooks/useGameState';
 import { CoinDisplay } from './CoinDisplay';
 import { UpgradeCard } from './UpgradeCard';
 import { PrestigePanel } from './PrestigePanel';
+import { OfflineEarningsModal } from './OfflineEarningsModal';
 
 type Tab = 'upgrades' | 'prestige';
 
@@ -18,6 +19,8 @@ export function GameDashboard() {
     prestige,
     canPrestige,
     calculatePrestigePoints,
+    offlineEarnings,
+    dismissOfflineEarnings,
   } = useGameState();
 
   const tabs = [
@@ -27,6 +30,14 @@ export function GameDashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {/* Offline earnings modal */}
+      <OfflineEarningsModal
+        isOpen={offlineEarnings !== null}
+        onClose={dismissOfflineEarnings}
+        earnings={offlineEarnings?.amount || 0}
+        timeAway={offlineEarnings?.timeAway || 0}
+      />
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
