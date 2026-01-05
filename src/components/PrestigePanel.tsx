@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Sparkles, RotateCcw, TrendingUp, Star } from 'lucide-react';
+import { useFeedback } from '@/hooks/useFeedback';
 
 interface PrestigePanelProps {
   prestigePoints: number;
@@ -18,7 +19,15 @@ export function PrestigePanel({
   canPrestige,
   onPrestige,
 }: PrestigePanelProps) {
+  const { prestigeFeedback } = useFeedback();
   const newMultiplier = 1 + (prestigePoints + potentialPoints) * 0.1;
+
+  const handlePrestige = () => {
+    if (canPrestige) {
+      prestigeFeedback();
+      onPrestige();
+    }
+  };
 
   return (
     <div className="game-card border-secondary/30 relative overflow-hidden">
@@ -63,7 +72,7 @@ export function PrestigePanel({
 
         {/* Prestige button */}
         <motion.button
-          onClick={onPrestige}
+          onClick={handlePrestige}
           disabled={!canPrestige}
           whileTap={canPrestige ? { scale: 0.95 } : {}}
           className={`w-full py-4 rounded-xl font-display font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-2 ${
