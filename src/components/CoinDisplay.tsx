@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useFeedback } from '@/hooks/useFeedback';
 
 interface CoinDisplayProps {
   coins: number;
@@ -29,10 +30,11 @@ export function CoinDisplay({ coins, coinsPerSecond, onTap, clickPower, prestige
   const [isPressed, setIsPressed] = useState(false);
   const coinIdRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { clickFeedback } = useFeedback();
 
   const handleTap = (e: React.MouseEvent | React.TouchEvent) => {
     onTap();
-    
+    clickFeedback();
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
 

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Lock } from 'lucide-react';
 import type { Upgrade } from '@/hooks/useGameState';
+import { useFeedback } from '@/hooks/useFeedback';
 
 interface UpgradeCardProps {
   upgrade: Upgrade;
@@ -18,6 +19,7 @@ function formatNumber(num: number): string {
 }
 
 export function UpgradeCard({ upgrade, cost, canAfford, isUnlocked, onBuy }: UpgradeCardProps) {
+  const { upgradeFeedback } = useFeedback();
   const isMaxed = upgrade.level >= upgrade.maxLevel;
   const progress = (upgrade.level / upgrade.maxLevel) * 100;
 
@@ -47,12 +49,19 @@ export function UpgradeCard({ upgrade, cost, canAfford, isUnlocked, onBuy }: Upg
     );
   }
 
+  const handleBuy = () => {
+    if (canAfford && !isMaxed) {
+      upgradeFeedback();
+      onBuy();
+    }
+  };
+
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: canAfford && !isMaxed ? 0.98 : 1 }}
-      onClick={onBuy}
+      onClick={handleBuy}
       disabled={!canAfford || isMaxed}
       className={`game-card w-full text-left transition-all duration-200 ${
         canAfford && !isMaxed 
